@@ -1,0 +1,43 @@
+language: elixir
+elixir: 1.9.1
+otp_release: 22.0.7
+
+before_install:
+  - if [[ $START_DB ]]; then
+      docker-compose up -d;
+    fi
+
+cache:
+  directories:
+    - _build
+    - deps
+
+jobs:
+  include:
+    - name: Static code analysis (dev)
+      stage: test
+      script: mix dialyzer --halt-exit-status
+
+    - name: Static code analysis (test)
+      stage: test
+      script: MIX_ENV=test mix dialyzer --halt-exit-status
+
+    - name: Test suite
+      stage: test
+      env:
+        - START_DB=true
+      script: mix test
+
+    - name: Compiler warnings
+      stage: test
+      env:
+        - START_DB=true
+      script: mix compile --warnings-as-errors --force && WARNINGS_AS_ERRORS=true mix test
+
+    - name: Code conventions
+      stage: test
+      script: mix credo
+
+    - name: Code format
+      stage: test
+      script: mix format --check-formatted --dry-run
