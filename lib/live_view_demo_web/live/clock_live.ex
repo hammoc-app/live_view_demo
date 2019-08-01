@@ -6,9 +6,9 @@ defmodule LiveViewDemoWeb.ClockLive do
 
   def render(assigns) do
     ~L"""
-    <div>
-      <h2 phx-click="boom">It's <%= strftime!(@date, "%r") %></h2>
-    </div>
+    <a class="button" phx-click="boom">
+      It's <%= strftime!(@date, "%r") %>
+    </a>
     """
   end
 
