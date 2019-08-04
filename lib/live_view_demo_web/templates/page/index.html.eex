@@ -1,9 +1,11 @@
-<section class="phx-hero">
-  <h1>My Phrenzy Entry</h1>
-  <p><%= link "This clock", to: Routes.live_path(@conn, LiveViewDemoWeb.ClockLive) %> is a basic live view in action.</p>
+<section class="hero is-dark">
+  <div class="hero-body">
+    <h1>My Phrenzy Entry</h1>
+    <p><%= link "This clock", to: Routes.live_path(@conn, LiveViewDemoWeb.ClockLive) %> is a basic live view in action.</p>
+  </div>
 </section>
 
-<section class="row">
+<section class="section columns">
   <article class="column">
     <h2>Resources</h2>
     <ul>
@@ -35,4 +37,10 @@
       </li>
     </ul>
   </article>
+</section>
+
+<section class="section has-text-centered">
+  <a href="/auth/twitter" class="button is-medium is-info has-text-weight-bold">
+    Sign in with Twitter
+  </a>
 </section>
