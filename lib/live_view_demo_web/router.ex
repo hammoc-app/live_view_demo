@@ -18,6 +18,8 @@ defmodule LiveViewDemoWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    get "/auth/twitter", AuthController, :twitter
+    live "/dashboard", DashboardLive
     live "/clock", ClockLive
   end
 
