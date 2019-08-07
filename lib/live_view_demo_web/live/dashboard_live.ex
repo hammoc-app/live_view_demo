@@ -71,9 +71,9 @@ defmodule LiveViewDemoWeb.DashboardLive do
     filter_params = Filters.encode_params(params)
     path = Routes.live_path(socket, __MODULE__, filter_params)
 
-      socket
-      |> update_autocomplete(autocomplete)
-      |> live_redirect(to: path)
+    socket
+    |> update_autocomplete(autocomplete)
+    |> live_redirect(to: path)
   end
 
   def handle_info(:tick, socket = %{assigns: %{remaining_tweets: []}}) do
@@ -141,13 +141,15 @@ defmodule LiveViewDemoWeb.DashboardLive do
     top_profiles =
       based_on
       |> ranked_options(socket.assigns.filters.profiles, & &1.user.screen_name)
-      |> Enum.map(fn screen_name ->
-        Enum.find_value(socket.assigns.loaded_tweets, fn tweet ->
-          if tweet.user.screen_name == screen_name, do: tweet.user
-        end)
-      end)
+      |> Enum.map(&find_profile(&1, socket.assigns.loaded_tweets))
 
     assign(socket, top_profiles: top_profiles)
+  end
+
+  defp find_profile(screen_name, tweets) do
+    Enum.find_value(tweets, fn tweet ->
+      if tweet.user.screen_name == screen_name, do: tweet.user
+    end)
   end
 
   defp ranked_options(options, selected_options, mapper) do
@@ -187,9 +189,10 @@ defmodule LiveViewDemoWeb.DashboardLive do
   defp add_autocomplete_from(_query, [], [], results), do: results
 
   defp add_autocomplete_from(query, [tweet | tweets], [], results) do
-    words = ~r/[\w\-\_]+/i
-    |> Regex.scan(String.downcase(tweet.text))
-    |> List.flatten()
+    words =
+      ~r/[\w\-\_]+/i
+      |> Regex.scan(String.downcase(tweet.text))
+      |> List.flatten()
 
     add_autocomplete_from(query, tweets, words, results)
   end
