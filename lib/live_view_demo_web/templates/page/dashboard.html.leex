@@ -1,4 +1,20 @@
-<%= for tweet <- @tweets do %>
-  <%= tweet["text"] %>
+<%= @user.profile_image_url %><br />
+<%= @user.name %><br />
+
+<%= for hashtag <- @top_hashtags do %>
+  <%= hashtag %>
+  <br />
+<% end %>
+<br />
+
+<%= for profile <- @top_profiles do %>
+  <%= profile.profile_image_url %>
+  <%= profile.screen_name %>
+  <br />
+<% end %>
+<br />
+
+<%= for result <- @results do %>
+  <%= result.text %>
   <br />
 <% end %>
