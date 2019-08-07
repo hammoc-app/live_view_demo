@@ -55,13 +55,26 @@ defmodule LiveViewDemoWeb.DashboardLive do
     {:noreply, new_socket}
   end
 
-  def handle_event("autocomplete", params, socket) do
-    new_socket = update_autocomplete(socket, params["q"])
+  def handle_event("filters-and-autocomplete", params, socket) do
+    url_params = Filters.encode_params(params)
+
+    filter_params =
+      case socket.assigns.filters.query do
+        nil -> url_params
+        query -> Map.put(url_params, "q", query)
+      end
+
+    path = Routes.live_path(socket, __MODULE__, filter_params)
+
+    new_socket =
+      socket
+      |> update_autocomplete(params["q"])
+      |> live_redirect(to: path)
 
     {:noreply, new_socket}
   end
 
-  def handle_event("filters-changed", params, socket) do
+  def handle_event("filters-and-search", params, socket) do
     path = Routes.live_path(socket, __MODULE__, Filters.encode_params(params))
     new_socket = live_redirect(socket, to: path)
 
