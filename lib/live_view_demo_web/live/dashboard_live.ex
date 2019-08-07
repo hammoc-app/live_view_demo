@@ -55,35 +55,25 @@ defmodule LiveViewDemoWeb.DashboardLive do
     {:noreply, new_socket}
   end
 
-  def handle_event("filters-and-autocomplete", params, socket) do
-    url_params = Filters.encode_params(params)
-
-    filter_params =
-      case socket.assigns.filters.query do
-        nil -> url_params
-        query -> Map.put(url_params, "q", query)
-      end
-
-    path = Routes.live_path(socket, __MODULE__, filter_params)
-
-    new_socket =
-      socket
-      |> update_autocomplete(params["q"])
-      |> live_redirect(to: path)
+  def handle_event("search-and-autocomplete", params, socket) do
+    new_socket = search(socket, params, params["q"])
 
     {:noreply, new_socket}
   end
 
-  def handle_event("filters-and-search", params, socket) do
+  def handle_event("search", params, socket) do
+    new_socket = search(socket, params, nil)
+
+    {:noreply, new_socket}
+  end
+
+  defp search(socket, params, autocomplete) do
     filter_params = Filters.encode_params(params)
     path = Routes.live_path(socket, __MODULE__, filter_params)
 
-    new_socket =
       socket
-      |> update_autocomplete(nil)
+      |> update_autocomplete(autocomplete)
       |> live_redirect(to: path)
-
-    {:noreply, new_socket}
   end
 
   def handle_info(:tick, socket = %{assigns: %{remaining_tweets: []}}) do
@@ -197,10 +187,9 @@ defmodule LiveViewDemoWeb.DashboardLive do
   defp add_autocomplete_from(_query, [], [], results), do: results
 
   defp add_autocomplete_from(query, [tweet | tweets], [], results) do
-    words =
-      tweet.text
-      |> String.downcase()
-      |> String.split(" ")
+    words = ~r/[\w\-\_]+/i
+    |> Regex.scan(String.downcase(tweet.text))
+    |> List.flatten()
 
     add_autocomplete_from(query, tweets, words, results)
   end

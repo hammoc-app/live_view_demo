@@ -1,7 +1,7 @@
 <%= @user.profile_image_url %><br />
 <%= @user.name %><br />
 
-<form action="#" class="" phx-change="filters-and-autocomplete" phx-submit="filters-and-search">
+<form action="#" class="" phx-change="search" phx-submit="search">
   <input name="q" type="text" value="<%= @filters.query %>">
   <input type="submit" value="Search">
   <%= if @autocomplete do %>
