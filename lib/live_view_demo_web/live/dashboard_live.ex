@@ -75,8 +75,13 @@ defmodule LiveViewDemoWeb.DashboardLive do
   end
 
   def handle_event("filters-and-search", params, socket) do
-    path = Routes.live_path(socket, __MODULE__, Filters.encode_params(params))
-    new_socket = live_redirect(socket, to: path)
+    filter_params = Filters.encode_params(params)
+    path = Routes.live_path(socket, __MODULE__, filter_params)
+
+    new_socket =
+      socket
+      |> update_autocomplete(nil)
+      |> live_redirect(to: path)
 
     {:noreply, new_socket}
   end
@@ -185,7 +190,9 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
   defp add_autocomplete_from(query, tweets, [word | words], results) do
     if String.starts_with?(word, query) do
-      unless MapSet.member?(results, word) do
+      if MapSet.member?(results, word) do
+        add_autocomplete_from(query, tweets, words, results)
+      else
         new_results = MapSet.put(results, word)
 
         if map_size(new_results) == 5 do
