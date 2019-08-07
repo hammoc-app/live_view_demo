@@ -2,6 +2,8 @@
 <%= @user.name %><br />
 
 <form action="#" class="" phx-change="filters-changed">
+  <input name="q" type="text" value="<%= @filters.query %>">
+
   <%= for hashtag <- @top_hashtags do %>
     <input name="hashtags[<%= hashtag %>]" type="checkbox" value="true"<%= checked(hashtag, @filters.hashtags) %>>
     <%= hashtag %>

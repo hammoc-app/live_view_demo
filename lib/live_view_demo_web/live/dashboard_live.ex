@@ -35,7 +35,8 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
     filters = %{
       hashtags: nil,
-      profiles: nil
+      profiles: nil,
+      query: nil
     }
 
     new_socket =
@@ -58,20 +59,23 @@ defmodule LiveViewDemoWeb.DashboardLive do
   end
 
   defp decode_params(params) do
-    IO.inspect(params, label: "decoding")
-
     %{
       hashtags: list_param(params["hashtags"]),
-      profiles: list_param(params["profiles"])
+      profiles: list_param(params["profiles"]),
+      query: text_param(params["q"])
     }
-    |> IO.inspect(label: "decoded")
   end
 
   defp list_param(nil), do: nil
+  defp list_param(""), do: nil
 
   defp list_param(str) when is_binary(str) do
     String.split(str, ",")
   end
+
+  defp text_param(nil), do: nil
+  defp text_param(""), do: nil
+  defp text_param(str) when is_binary(str), do: str
 
   def handle_event("filters-changed", params, socket) do
     new_socket =
@@ -82,10 +86,16 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
   defp encode_params(params) do
     params
-    |> IO.inspect(label: "encoding")
     |> encode_list("hashtags")
     |> encode_list("profiles")
-    |> IO.inspect(label: "encoded")
+    |> encode_text("q")
+  end
+
+  defp encode_text(params, field) do
+    case params[field] do
+      "" -> params |> Map.delete(field)
+      _ -> params
+    end
   end
 
   defp encode_list(params, field) do
@@ -133,6 +143,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
         Enum.map(tweet.entities.hashtags, & &1.text)
       end)
       |> filter_by(filters.profiles, & &1.user.screen_name)
+      |> filter_by(filters.query, & &1.text)
 
     assign(socket, tweets: tweets)
   end
@@ -154,6 +165,10 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
   defp include_result?(result, inclusion_list) when is_list(inclusion_list) do
     result in inclusion_list
+  end
+
+  defp include_result?(result, text) when is_binary(text) do
+    String.contains?(result, text)
   end
 
   defp update_top_hashtags(socket) do
