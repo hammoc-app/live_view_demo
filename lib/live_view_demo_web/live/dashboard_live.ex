@@ -13,6 +13,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
       top_hashtags: assigns.top_hashtags,
       top_profiles: assigns.top_profiles,
       filters: assigns.filters,
+      autocomplete: assigns.autocomplete,
       conn: assigns.socket
     )
   end
@@ -43,12 +44,19 @@ defmodule LiveViewDemoWeb.DashboardLive do
       |> assign(:loaded_tweets, [])
       |> assign(:remaining_tweets, remaining_tweets)
       |> assign(:filters, %Filters{})
+      |> assign(:autocomplete, nil)
 
     {:ok, new_socket}
   end
 
   def handle_params(params, _uri, socket) do
     new_socket = assign(socket, :filters, Filters.decode_params(params))
+
+    {:noreply, new_socket}
+  end
+
+  def handle_event("autocomplete", params, socket) do
+    new_socket = update_autocomplete(socket, params["q"])
 
     {:noreply, new_socket}
   end
@@ -134,5 +142,47 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
   defp prepend_options(options, prepend, mapper) do
     prepend_options(options, Enum.map(prepend, mapper))
+  end
+
+  defp update_autocomplete(socket, query) do
+    words =
+      case query do
+        nil ->
+          nil
+
+        query ->
+          if String.length(query) >= 3 do
+            add_autocomplete_from(query, socket.assigns.loaded_tweets, [], MapSet.new())
+          end
+      end
+
+    assign(socket, autocomplete: words)
+  end
+
+  defp add_autocomplete_from(_query, [], [], results), do: results
+
+  defp add_autocomplete_from(query, [tweet | tweets], [], results) do
+    words =
+      tweet.text
+      |> String.downcase()
+      |> String.split(" ")
+
+    add_autocomplete_from(query, tweets, words, results)
+  end
+
+  defp add_autocomplete_from(query, tweets, [word | words], results) do
+    if String.starts_with?(word, query) do
+      unless MapSet.member?(results, word) do
+        new_results = MapSet.put(results, word)
+
+        if map_size(new_results) == 5 do
+          new_results
+        else
+          add_autocomplete_from(query, tweets, words, new_results)
+        end
+      end
+    else
+      add_autocomplete_from(query, tweets, words, results)
+    end
   end
 end

@@ -1,18 +1,26 @@
 <%= @user.profile_image_url %><br />
 <%= @user.name %><br />
 
-<form action="#" class="" phx-change="filters-changed">
+<form action="#" class="" phx-change="autocomplete" phx-submit="filters-changed">
   <input name="q" type="text" value="<%= @filters.query %>">
+  <input type="submit" value="Search">
+  <%= if @autocomplete do %>
+    <%= for word <- @autocomplete do %>
+      <%= word %>
+      <br />
+    <% end %>
+    <br />
+  <% end %>
 
   <%= for hashtag <- @top_hashtags do %>
-    <input name="hashtags[<%= hashtag %>]" type="checkbox" value="true"<%= checked(hashtag, @filters.hashtags) %>>
+    <input name="hashtags[<%= hashtag %>]" type="checkbox" value="true"<%= checked(hashtag, @filters.hashtags) %> phx-change="filters-changed">
     <%= hashtag %>
     <br />
   <% end %>
   <br />
 
   <%= for profile <- @top_profiles do %>
-    <input name="profiles[<%= profile.screen_name %>]" type="checkbox" value="true"<%= checked(profile.screen_name, @filters.profiles) %>>
+    <input name="profiles[<%= profile.screen_name %>]" type="checkbox" value="true"<%= checked(profile.screen_name, @filters.profiles) %> phx-change="filters-changed">
     <%= profile.profile_image_url %>
     <%= profile.screen_name %>
     <br />
