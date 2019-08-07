@@ -73,23 +73,23 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
   defp update_top_hashtags(socket) do
     top_hashtags =
-    socket.assigns.tweets
-    |> Enum.flat_map(& &1.entities.hashtags)
-    |> Enum.map(& &1.text)
-    |> Enum.uniq()
-    |> Enum.sort()
-    |> Enum.take(5)
+      socket.assigns.tweets
+      |> Enum.flat_map(& &1.entities.hashtags)
+      |> Enum.map(& &1.text)
+      |> Enum.uniq()
+      |> Enum.sort()
+      |> Enum.take(5)
 
     assign(socket, top_hashtags: top_hashtags)
   end
 
   defp update_top_profiles(socket) do
     top_profiles =
-    socket.assigns.tweets
-    |> Enum.map(& &1.user)
-    |> Enum.uniq_by(& &1.screen_name)
-    |> Enum.sort_by(& &1.followers_count)
-    |> Enum.take(5)
+      socket.assigns.tweets
+      |> Enum.map(& &1.user)
+      |> Enum.uniq_by(& &1.screen_name)
+      |> Enum.sort_by(& &1.followers_count)
+      |> Enum.take(5)
 
     assign(socket, top_profiles: top_profiles)
   end
