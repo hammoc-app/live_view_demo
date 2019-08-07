@@ -1,20 +1,24 @@
 <%= @user.profile_image_url %><br />
 <%= @user.name %><br />
 
-<%= for hashtag <- @top_hashtags do %>
-  <%= hashtag %>
+<form action="#" class="" phx-change="filters-changed">
+  <%= for hashtag <- @top_hashtags do %>
+    <input name="hashtags[<%= hashtag %>]" type="checkbox" value="true"<%= checked(hashtag, @filters.hashtags) %>>
+    <%= hashtag %>
+    <br />
+  <% end %>
   <br />
-<% end %>
-<br />
 
-<%= for profile <- @top_profiles do %>
-  <%= profile.profile_image_url %>
-  <%= profile.screen_name %>
+  <%= for profile <- @top_profiles do %>
+    <input name="profiles[<%= profile.screen_name %>]" type="checkbox" value="true"<%= checked(profile.screen_name, @filters.profiles) %>>
+    <%= profile.profile_image_url %>
+    <%= profile.screen_name %>
+    <br />
+  <% end %>
   <br />
-<% end %>
-<br />
 
-<%= for result <- @results do %>
-  <%= result.text %>
-  <br />
-<% end %>
+  <%= for result <- @results do %>
+    <%= result.text %>
+    <br />
+  <% end %>
+</form>
