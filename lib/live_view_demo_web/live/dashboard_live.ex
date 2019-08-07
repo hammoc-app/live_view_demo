@@ -4,6 +4,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
   use Phoenix.LiveView
 
   alias LiveViewDemoWeb.Router.Helpers, as: Routes
+  alias LiveViewDemoWeb.Filters
 
   def render(assigns) do
     Phoenix.View.render(LiveViewDemoWeb.PageView, "dashboard.html",
@@ -33,12 +34,6 @@ defmodule LiveViewDemoWeb.DashboardLive do
         "http://pbs.twimg.com/profile_images/485776583542575104/PvpyGtOc_normal.jpeg"
     }
 
-    filters = %{
-      hashtags: nil,
-      profiles: nil,
-      query: nil
-    }
-
     new_socket =
       socket
       |> assign(:user, user)
@@ -47,67 +42,22 @@ defmodule LiveViewDemoWeb.DashboardLive do
       |> assign(:top_profiles, [])
       |> assign(:loaded_tweets, [])
       |> assign(:remaining_tweets, remaining_tweets)
-      |> assign(:filters, filters)
+      |> assign(:filters, %Filters{})
 
     {:ok, new_socket}
   end
 
   def handle_params(params, _uri, socket) do
-    new_socket = assign(socket, :filters, decode_params(params))
+    new_socket = assign(socket, :filters, Filters.decode_params(params))
 
     {:noreply, new_socket}
   end
-
-  defp decode_params(params) do
-    %{
-      hashtags: list_param(params["hashtags"]),
-      profiles: list_param(params["profiles"]),
-      query: text_param(params["q"])
-    }
-  end
-
-  defp list_param(nil), do: nil
-  defp list_param(""), do: nil
-
-  defp list_param(str) when is_binary(str) do
-    String.split(str, ",")
-  end
-
-  defp text_param(nil), do: nil
-  defp text_param(""), do: nil
-  defp text_param(str) when is_binary(str), do: str
 
   def handle_event("filters-changed", params, socket) do
-    new_socket =
-      live_redirect(socket, to: Routes.live_path(socket, __MODULE__, encode_params(params)))
+    path = Routes.live_path(socket, __MODULE__, Filters.encode_params(params))
+    new_socket = live_redirect(socket, to: path)
 
     {:noreply, new_socket}
-  end
-
-  defp encode_params(params) do
-    params
-    |> encode_list("hashtags")
-    |> encode_list("profiles")
-    |> encode_text("q")
-  end
-
-  defp encode_text(params, field) do
-    case params[field] do
-      "" -> params |> Map.delete(field)
-      _ -> params
-    end
-  end
-
-  defp encode_list(params, field) do
-    case params[field] do
-      nil -> params
-      list -> Map.put(params, field, do_encode_list(list))
-    end
-  end
-
-  defp do_encode_list(list) do
-    items = for {item, "true"} <- list, do: item
-    Enum.join(items, ",")
   end
 
   def handle_info(:tick, socket = %{assigns: %{remaining_tweets: []}}) do
@@ -139,36 +89,13 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
     tweets =
       socket.assigns.loaded_tweets
-      |> filter_by(filters.hashtags, fn tweet ->
+      |> Filters.filter_by(filters.hashtags, fn tweet ->
         Enum.map(tweet.entities.hashtags, & &1.text)
       end)
-      |> filter_by(filters.profiles, & &1.user.screen_name)
-      |> filter_by(filters.query, & &1.text)
+      |> Filters.filter_by(filters.profiles, & &1.user.screen_name)
+      |> Filters.filter_by(filters.query, & &1.text)
 
     assign(socket, tweets: tweets)
-  end
-
-  defp filter_by(results, nil, _mapper), do: results
-
-  defp filter_by(results, filter, mapper) do
-    Enum.filter(results, fn result ->
-      result
-      |> mapper.()
-      |> include_result?(filter)
-    end)
-  end
-
-  defp include_result?(result_list, inclusion_list)
-       when is_list(result_list) and is_list(inclusion_list) do
-    Enum.any?(result_list, &(&1 in inclusion_list))
-  end
-
-  defp include_result?(result, inclusion_list) when is_list(inclusion_list) do
-    result in inclusion_list
-  end
-
-  defp include_result?(result, text) when is_binary(text) do
-    String.contains?(result, text)
   end
 
   defp update_top_hashtags(socket) do
