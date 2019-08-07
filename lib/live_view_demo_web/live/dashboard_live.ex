@@ -135,12 +135,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
     top_hashtags =
       based_on
       |> Enum.flat_map(& &1.entities.hashtags)
-      |> Util.Enum.count(& &1.text)
-      |> Util.Enum.top_counts(5)
-      |> Enum.map(&elem(&1, 0))
-      |> prepend_options(socket.assigns.filters.hashtags)
-      |> Enum.uniq()
-      |> Enum.take(5)
+      |> ranked_options(socket.assigns.filters.hashtags, & &1.text)
 
     assign(socket, top_hashtags: top_hashtags)
   end
@@ -155,19 +150,24 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
     top_profiles =
       based_on
-      |> Util.Enum.count(& &1.user.screen_name)
-      |> Util.Enum.top_counts(5)
-      |> Enum.map(&elem(&1, 0))
-      |> prepend_options(socket.assigns.filters.profiles)
+      |> ranked_options(socket.assigns.filters.profiles, & &1.user.screen_name)
       |> Enum.map(fn screen_name ->
         Enum.find_value(socket.assigns.loaded_tweets, fn tweet ->
           if tweet.user.screen_name == screen_name, do: tweet.user
         end)
       end)
-      |> Enum.uniq_by(& &1.screen_name)
-      |> Enum.take(5)
 
     assign(socket, top_profiles: top_profiles)
+  end
+
+  defp ranked_options(options, selected_options, mapper) do
+    options
+    |> Util.Enum.count(mapper)
+    |> Util.Enum.top_counts(5)
+    |> Enum.map(&elem(&1, 0))
+    |> prepend_options(selected_options)
+    |> Enum.uniq()
+    |> Enum.take(5)
   end
 
   defp prepend_options(options, prepend, mapper \\ nil)
