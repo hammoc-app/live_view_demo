@@ -93,7 +93,7 @@ defmodule LiveViewDemoWeb.Filters do
     result in inclusion_list
   end
 
-  defp include_result?(result, text) when is_binary(text) do
-    String.contains?(result, text)
+  defp include_result?(result, query) when is_binary(query) do
+    String.match?(result, ~r/#{query}/iu)
   end
 end

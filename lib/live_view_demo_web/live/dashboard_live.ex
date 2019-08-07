@@ -103,8 +103,9 @@ defmodule LiveViewDemoWeb.DashboardLive do
       socket.assigns.loaded_tweets
       |> Enum.flat_map(& &1.entities.hashtags)
       |> Enum.map(& &1.text)
-      |> Enum.uniq()
       |> Enum.sort()
+      |> prepend_options(socket.assigns.filters.hashtags)
+      |> Enum.uniq()
       |> Enum.take(5)
 
     assign(socket, top_hashtags: top_hashtags)
@@ -114,10 +115,24 @@ defmodule LiveViewDemoWeb.DashboardLive do
     top_profiles =
       socket.assigns.loaded_tweets
       |> Enum.map(& &1.user)
-      |> Enum.uniq_by(& &1.screen_name)
       |> Enum.sort_by(& &1.followers_count)
+      |> prepend_options(socket.assigns.filters.profiles, fn screen_name ->
+        Enum.find_value(socket.assigns.loaded_tweets, fn tweet ->
+          if tweet.user.screen_name == screen_name, do: tweet.user
+        end)
+      end)
+      |> Enum.uniq_by(& &1.screen_name)
       |> Enum.take(5)
 
     assign(socket, top_profiles: top_profiles)
+  end
+
+  defp prepend_options(options, prepend, mapper \\ nil)
+
+  defp prepend_options(options, nil, _mapper), do: options
+  defp prepend_options(options, prepend, nil), do: prepend ++ options
+
+  defp prepend_options(options, prepend, mapper) do
+    prepend_options(options, Enum.map(prepend, mapper))
   end
 end
