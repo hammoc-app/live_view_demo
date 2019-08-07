@@ -125,11 +125,19 @@ defmodule LiveViewDemoWeb.DashboardLive do
   end
 
   defp update_top_hashtags(socket) do
+    based_on =
+      if socket.assigns.filters.hashtags do
+        socket.assigns.loaded_tweets
+      else
+        socket.assigns.tweets
+      end
+
     top_hashtags =
-      socket.assigns.loaded_tweets
+      based_on
       |> Enum.flat_map(& &1.entities.hashtags)
-      |> Enum.map(& &1.text)
-      |> Enum.sort()
+      |> Util.Enum.count(& &1.text)
+      |> Util.Enum.top_counts(5)
+      |> Enum.map(&elem(&1, 0))
       |> prepend_options(socket.assigns.filters.hashtags)
       |> Enum.uniq()
       |> Enum.take(5)
@@ -138,11 +146,20 @@ defmodule LiveViewDemoWeb.DashboardLive do
   end
 
   defp update_top_profiles(socket) do
+    based_on =
+      if socket.assigns.filters.profiles do
+        socket.assigns.loaded_tweets
+      else
+        socket.assigns.tweets
+      end
+
     top_profiles =
-      socket.assigns.loaded_tweets
-      |> Enum.map(& &1.user)
-      |> Enum.sort_by(& &1.followers_count)
-      |> prepend_options(socket.assigns.filters.profiles, fn screen_name ->
+      based_on
+      |> Util.Enum.count(& &1.user.screen_name)
+      |> Util.Enum.top_counts(5)
+      |> Enum.map(&elem(&1, 0))
+      |> prepend_options(socket.assigns.filters.profiles)
+      |> Enum.map(fn screen_name ->
         Enum.find_value(socket.assigns.loaded_tweets, fn tweet ->
           if tweet.user.screen_name == screen_name, do: tweet.user
         end)
