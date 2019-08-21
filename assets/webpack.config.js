@@ -46,6 +46,21 @@ module.exports = (env, options) => ({
             }
           }
         ]
+      },
+      // Load fonts
+      {
+        test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?(\?.*$|$)/,
+        loader: 'url-loader',
+        options: {
+          outputPath: '../fonts'
+        }
+      },
+      {
+        test: /\.(eot|ttf|otf)?(\?.*$|$)/,
+        loader: 'file-loader',
+        options: {
+          outputPath: '../fonts'
+        }
       }
     ]
   },

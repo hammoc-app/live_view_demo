@@ -1,0 +1,14 @@
+.margin-right {
+  margin-right: 0.4rem;
+}
+
+.results {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.results .result {
+  flex: 0 0 50%;
+  box-sizing: border-box;
+  padding: 10px;
+}

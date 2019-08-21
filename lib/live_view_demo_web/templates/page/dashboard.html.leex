@@ -1,5 +1,9 @@
-<%= @user.profile_image_url %><br />
-<%= @user.name %><br />
+<div>
+  <span class="image is-32x32 margin-right">
+    <img src="<%= @user.profile_image_url %>" alt="Profile image" class="is-rounded"/>
+  </span>
+  <%= @user.name %>
+</div>
 
 <form action="#" class="" phx-change="search" phx-submit="search">
   <input name="q" type="text" value="<%= @filters.query %>">
@@ -12,23 +16,72 @@
     <br />
   <% end %>
 
-  <%= for hashtag <- @top_hashtags do %>
-    <input name="hashtags[<%= hashtag %>]" type="checkbox" value="true"<%= checked(hashtag, @filters.hashtags) %>>
-    <%= hashtag %>
-    <br />
-  <% end %>
-  <br />
+  <div class="section" id="hashtags">
+    <%= for hashtag <- @top_hashtags do %>
+      <label class="button is-rounded<%= checked(hashtag, @filters.hashtags, " is-primary") %>">
+        <input name="hashtags[<%= hashtag %>]" type="checkbox" value="true"<%= checked(hashtag, @filters.hashtags) %> class="is-hidden">
+        #<%= hashtag %>
+      </label>
+    <% end %>
+  </div>
 
-  <%= for profile <- @top_profiles do %>
-    <input name="profiles[<%= profile.screen_name %>]" type="checkbox" value="true"<%= checked(profile.screen_name, @filters.profiles) %>>
-    <%= profile.profile_image_url %>
-    <%= profile.screen_name %>
-    <br />
-  <% end %>
-  <br />
+  <div class="section" id="profiles">
+    <%= for profile <- @top_profiles do %>
+      <label class="button is-rounded<%= checked(profile.screen_name, @filters.profiles, " is-primary") %>">
+        <input name="profiles[<%= profile.screen_name %>]" type="checkbox" value="true"<%= checked(profile.screen_name, @filters.profiles) %> class="is-hidden">
+        <span class="image is-24x24 margin-right">
+          <img src="<%= profile.profile_image_url %>" alt="Profile image" class="is-rounded" />
+        </span>
+        <%= profile.screen_name %>
+      </label>
+    <% end %>
+  </div>
 
-  <%= for result <- @results do %>
-    <%= result.text %>
-    <br />
-  <% end %>
+  <ul class="results" id="results">
+    <%= for result <- @results do %>
+      <li class="result">
+        <div class="box">
+          <article class="media">
+            <div class="media-content">
+              <div class="content" style="display: flex;">
+                <a class="image is-48x48 margin-right" href="https://twitter.com/<%= result.user.screen_name %>">
+                  <img src="<%= result.user.profile_image_url %>" class="is-rounded">
+                </a>
+                <a href="https://twitter.com/<%= result.user.screen_name %>">
+                  <div class="title is-5"><%= result.user.name %></div>
+                  <div class="subtitle is-6">@<%= result.user.screen_name %></div>
+                </a>
+              </div>
+              <div class="content">
+                <%= raw auto_link(result.text) %>
+              </div>
+              <nav class="level">
+                <div class="level-left">
+                  <a class="level-item has-text-grey" href="https://twitter.com/intent/tweet?in_reply_to=<%= result.id %>">
+                    <span class="icon"><i class="mdi mdi-reply"></i></span>
+                  </a>
+                  <a class="level-item has-text-grey" href="https://twitter.com/intent/retweet?tweet_id=<%= result.id %>">
+                    <span class="icon"><i class="mdi mdi-twitter-retweet"></i></span>
+                    <%= result.retweet_count %>
+                  </a>
+                  <a class="level-item has-text-grey" href="https://twitter.com/intent/like?tweet_id=<%= result.id %>">
+                    <span class="icon"><i class="mdi mdi-heart"></i></span>
+                    <%= result.favorite_count %>
+                  </a>
+                </div>
+                <div class="level-right is-size-7">
+                  <%= format_twitter_datetime(result.created_at) %>
+                </div>
+              </nav>
+            </div>
+            <div class="media-right">
+              <a class="icon has-text-info" href="https://twitter.com/<%= result.user.screen_name %>/status/<%= result.id %>" title="View on Twitter">
+                <i class="mdi mdi-twitter"></i>
+              </a>
+            </div>
+          </article>
+        </div>
+      </li>
+    <% end %>
+  </ul>
 </form>
