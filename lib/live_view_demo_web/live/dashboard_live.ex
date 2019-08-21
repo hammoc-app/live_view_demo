@@ -157,18 +157,9 @@ defmodule LiveViewDemoWeb.DashboardLive do
     |> Util.Enum.count(mapper)
     |> Util.Enum.top_counts(5)
     |> Enum.map(&elem(&1, 0))
-    |> prepend_options(selected_options)
+    |> Util.List.prepend(selected_options)
     |> Enum.uniq()
     |> Enum.take(5)
-  end
-
-  defp prepend_options(options, prepend, mapper \\ nil)
-
-  defp prepend_options(options, nil, _mapper), do: options
-  defp prepend_options(options, prepend, nil), do: prepend ++ options
-
-  defp prepend_options(options, prepend, mapper) do
-    prepend_options(options, Enum.map(prepend, mapper))
   end
 
   defp update_autocomplete(socket, query) do
@@ -204,7 +195,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
       else
         new_results = MapSet.put(results, word)
 
-        if map_size(new_results) == 5 do
+        if MapSet.size(new_results) == 5 do
           new_results
         else
           add_autocomplete_from(query, tweets, words, new_results)
