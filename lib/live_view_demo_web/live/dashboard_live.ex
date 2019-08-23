@@ -4,7 +4,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
   use Phoenix.LiveView
 
   alias LiveViewDemoWeb.Router.Helpers, as: Routes
-  alias LiveViewDemoWeb.Filters
+  alias LiveViewDemoWeb.{Filters, Retrieval}
 
   def render(assigns) do
     Phoenix.View.render(LiveViewDemoWeb.PageView, "dashboard.html",
@@ -14,7 +14,8 @@ defmodule LiveViewDemoWeb.DashboardLive do
       top_profiles: assigns.top_profiles,
       filters: assigns.filters,
       autocomplete: assigns.autocomplete,
-      conn: assigns.socket
+      conn: assigns.socket,
+      retrieval: assigns.retrieval
     )
   end
 
@@ -45,6 +46,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
       |> assign(:remaining_tweets, remaining_tweets)
       |> assign(:filters, %Filters{})
       |> assign(:autocomplete, nil)
+      |> assign(:retrieval, %Retrieval{})
 
     {:ok, new_socket}
   end
@@ -98,6 +100,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
     |> update_tweets()
     |> update_top_hashtags()
     |> update_top_profiles()
+    |> update_progress()
   end
 
   defp update_tweets(socket) do
@@ -144,6 +147,24 @@ defmodule LiveViewDemoWeb.DashboardLive do
       |> Enum.map(&find_profile(&1, socket.assigns.loaded_tweets))
 
     assign(socket, top_profiles: top_profiles)
+  end
+
+  defp update_progress(socket) do
+    assign(socket, retrieval: retrieval_info(socket))
+  end
+
+  defp retrieval_info(%{assigns: %{remaining_tweets: []}}), do: %Retrieval{}
+
+  defp retrieval_info(socket) do
+    %Retrieval{
+      jobs: [
+        %Retrieval.Job{
+          channel: "Twitter Favorites",
+          current: length(socket.assigns.loaded_tweets),
+          max: length(socket.assigns.loaded_tweets) + length(socket.assigns.remaining_tweets)
+        }
+      ]
+    }
   end
 
   defp find_profile(screen_name, tweets) do

@@ -5,6 +5,12 @@
   <%= @user.name %>
 </div>
 
+<%= for %{channel: channel, current: current, max: max} <- @retrieval.jobs do %>
+  <progress class="progress is-small" value="<%= current %>" max="<%= max %>" title="<%= channel %>">
+    <%= current %>/<%= max %>
+  </progress>
+<% end %>
+
 <form action="#" class="" phx-change="search" phx-submit="search">
   <input name="q" type="text" value="<%= @filters.query %>">
   <input type="submit" value="Search">
