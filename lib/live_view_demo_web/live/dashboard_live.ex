@@ -9,13 +9,13 @@ defmodule LiveViewDemoWeb.DashboardLive do
   def render(assigns) do
     Phoenix.View.render(LiveViewDemoWeb.PageView, "dashboard.html",
       user: assigns.user,
-      results: assigns.tweets,
       top_hashtags: assigns.top_hashtags,
       top_profiles: assigns.top_profiles,
       filters: assigns.filters,
       autocomplete: assigns.autocomplete,
       conn: assigns.socket,
-      retrieval: assigns.retrieval
+      retrieval: assigns.retrieval,
+      paginator: assigns.paginator
     )
   end
 
@@ -47,12 +47,16 @@ defmodule LiveViewDemoWeb.DashboardLive do
       |> assign(:filters, %Filters{})
       |> assign(:autocomplete, nil)
       |> assign(:retrieval, %Retrieval{})
+      |> update_page()
 
     {:ok, new_socket}
   end
 
   def handle_params(params, _uri, socket) do
-    new_socket = assign(socket, :filters, Filters.decode_params(params))
+    new_socket =
+      socket
+      |> assign(:filters, Filters.decode_params(params))
+      |> update_page()
 
     {:noreply, new_socket}
   end
@@ -98,6 +102,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
     socket
     |> update(:loaded_tweets, fn loaded_tweets -> loaded_tweets ++ tweets end)
     |> update_tweets()
+    |> update_page()
     |> update_top_hashtags()
     |> update_top_profiles()
     |> update_progress()
@@ -115,6 +120,12 @@ defmodule LiveViewDemoWeb.DashboardLive do
       |> Filters.filter_by(filters.query, & &1.text)
 
     assign(socket, tweets: tweets)
+  end
+
+  defp update_page(socket) do
+    paginator = Scrivener.paginate(socket.assigns.tweets, page: socket.assigns.filters.page || 1)
+
+    assign(socket, paginator: paginator)
   end
 
   defp update_top_hashtags(socket) do

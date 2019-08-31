@@ -1,7 +1,7 @@
 defmodule LiveViewDemoWeb.Filters do
   @moduledoc "Data structure and helpers to deal with the filters form."
 
-  defstruct [:hashtags, :profiles, :query]
+  defstruct [:hashtags, :profiles, :query, :page]
 
   @doc """
   Transforms form params so they can be given as (URL) path options.
@@ -15,6 +15,10 @@ defmodule LiveViewDemoWeb.Filters do
       iex> %{"hashtags" => %{"elixirlang" => "true", "liveview" => "true"}, "q" => ""}
       ...> |> LiveViewDemoWeb.Filters.encode_params()
       %{"hashtags" => "elixirlang,liveview"}
+
+      iex> %{"hashtags" => %{"elixirlang" => "true", "liveview" => "true"}, "p" => "3"}
+      ...> |> LiveViewDemoWeb.Filters.encode_params()
+      %{"hashtags" => "elixirlang,liveview", "p" => "3"}
   """
   def encode_params(params) do
     params
@@ -54,12 +58,17 @@ defmodule LiveViewDemoWeb.Filters do
       iex> %{"hashtags" => "elixirlang,liveview", "q" => ""}
       ...> |> LiveViewDemoWeb.Filters.decode_params()
       %LiveViewDemoWeb.Filters{hashtags: ["elixirlang", "liveview"]}
+
+      iex> %{"hashtags" => "elixirlang,liveview", "p" => "3"}
+      ...> |> LiveViewDemoWeb.Filters.decode_params()
+      %LiveViewDemoWeb.Filters{hashtags: ["elixirlang", "liveview"], page: 3}
   """
   def decode_params(params) do
     %__MODULE__{
       hashtags: list_param(params["hashtags"]),
       profiles: list_param(params["profiles"]),
-      query: text_param(params["q"])
+      query: text_param(params["q"]),
+      page: number_param(params["p"])
     }
   end
 
@@ -73,6 +82,16 @@ defmodule LiveViewDemoWeb.Filters do
   defp text_param(nil), do: nil
   defp text_param(""), do: nil
   defp text_param(str) when is_binary(str), do: str
+
+  defp number_param(nil), do: nil
+  defp number_param(""), do: nil
+
+  defp number_param(str) do
+    case String.to_integer(str) do
+      n when n > 0 -> n
+      _ -> nil
+    end
+  end
 
   def filter_by(results, nil, _mapper), do: results
 
