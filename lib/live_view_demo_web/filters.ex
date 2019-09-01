@@ -1,7 +1,7 @@
 defmodule LiveViewDemoWeb.Filters do
   @moduledoc "Data structure and helpers to deal with the filters form."
 
-  defstruct [:hashtags, :profiles, :query, :page]
+  defstruct [:hashtags, :profiles, :query, page: 1]
 
   @doc """
   Transforms form params so they can be given as (URL) path options.
@@ -16,34 +16,50 @@ defmodule LiveViewDemoWeb.Filters do
       ...> |> LiveViewDemoWeb.Filters.encode_params()
       %{"hashtags" => "elixirlang,liveview"}
 
-      iex> %{"hashtags" => %{"elixirlang" => "true", "liveview" => "true"}, "p" => "3"}
+      iex> %LiveViewDemoWeb.Filters{hashtags: ["elixirlang", "liveview"], query: "dev"}
       ...> |> LiveViewDemoWeb.Filters.encode_params()
-      %{"hashtags" => "elixirlang,liveview", "p" => "3"}
+      %{"hashtags" => "elixirlang,liveview", "q" => "dev"}
   """
+  def encode_params(params = %__MODULE__{}) do
+    %{
+      "hashtags" => params.hashtags,
+      "profiles" => params.profiles,
+      "q" => params.query,
+      "p" => params.page
+    }
+    |> encode_params()
+  end
+
   def encode_params(params) do
     params
     |> encode_list("hashtags")
     |> encode_list("profiles")
     |> encode_text("q")
+    |> encode_text("p", 1)
   end
 
-  defp encode_text(params, field) do
+  defp encode_text(params, field, default \\ "") do
     case params[field] do
-      "" -> params |> Map.delete(field)
+      ^default -> Map.delete(params, field)
+      nil -> Map.delete(params, field)
       _ -> params
     end
   end
 
   defp encode_list(params, field) do
     case params[field] do
-      nil -> params
+      nil -> Map.delete(params, field)
       list -> Map.put(params, field, do_encode_list(list))
     end
   end
 
-  defp do_encode_list(list) do
-    items = for {item, "true"} <- list, do: item
-    Enum.join(items, ",")
+  defp do_encode_list(list) when is_list(list) do
+    Enum.join(list, ",")
+  end
+
+  defp do_encode_list(map) when is_map(map) do
+    items = for {item, "true"} <- map, do: item
+    do_encode_list(items)
   end
 
   @doc """

@@ -56,7 +56,10 @@ defmodule LiveViewDemoWeb.DashboardLive do
     new_socket =
       socket
       |> assign(:filters, Filters.decode_params(params))
+      |> update_tweets()
       |> update_page()
+      |> update_top_hashtags()
+      |> update_top_profiles()
 
     {:noreply, new_socket}
   end
@@ -123,7 +126,8 @@ defmodule LiveViewDemoWeb.DashboardLive do
   end
 
   defp update_page(socket) do
-    paginator = Scrivener.paginate(socket.assigns.tweets, page: socket.assigns.filters.page || 1)
+    paginator =
+      Scrivener.paginate(socket.assigns.tweets, page: socket.assigns.filters.page, page_size: 2)
 
     assign(socket, paginator: paginator)
   end

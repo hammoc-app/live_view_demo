@@ -93,7 +93,7 @@
 
   <nav class="pagination is-centered">
     <ul class="pagination-list">
-      <%= for page <- Scrivener.HTML.raw_pagination_links @paginator do %>
+      <%= for page <- Scrivener.HTML.raw_pagination_links @paginator, distance: 3 do %>
         <li>
           <%= case page do %>
             <% {:ellipsis, _label} -> %>
@@ -104,14 +104,9 @@
                   <%= label %>
                 </a>
               <% else %>
-                <%=
-                  live_link(
-                    to: Routes.live_path(@conn, LiveViewDemoWeb.DashboardLive, p: page),
-                    class: "pagination-link",
-                    rel: Scrivener.HTML.SEO.rel(@paginator, page),
-                    do: label
-                  )
-                %>
+                <a class="pagination-link" data-phx-live-link="push" href="<%= Routes.live_path(@conn, LiveViewDemoWeb.DashboardLive, LiveViewDemoWeb.Filters.encode_params(%{@filters | page: page})) %>" rel="<%= Scrivener.HTML.SEO.rel(@paginator, page) %>">
+                  <%= label %>
+                </a>
               <% end %>
           <% end %>
         </li>
