@@ -1,4 +1,4 @@
-defmodule LiveViewDemoWeb.Filters do
+defmodule LiveViewDemo.Search.Facets do
   @moduledoc "Data structure and helpers to deal with the filters form."
 
   defstruct [:hashtags, :profiles, :query, page: 1]
@@ -9,15 +9,15 @@ defmodule LiveViewDemoWeb.Filters do
   ## Examples
 
       iex> %{"hashtags" => %{"elixirlang" => "true"}, "q" => "testing"}
-      ...> |> LiveViewDemoWeb.Filters.encode_params()
+      ...> |> LiveViewDemo.Search.Facets.encode_params()
       %{"hashtags" => "elixirlang", "q" => "testing"}
 
       iex> %{"hashtags" => %{"elixirlang" => "true", "liveview" => "true"}, "q" => ""}
-      ...> |> LiveViewDemoWeb.Filters.encode_params()
+      ...> |> LiveViewDemo.Search.Facets.encode_params()
       %{"hashtags" => "elixirlang,liveview"}
 
-      iex> %LiveViewDemoWeb.Filters{hashtags: ["elixirlang", "liveview"], query: "dev"}
-      ...> |> LiveViewDemoWeb.Filters.encode_params()
+      iex> %LiveViewDemo.Search.Facets{hashtags: ["elixirlang", "liveview"], query: "dev"}
+      ...> |> LiveViewDemo.Search.Facets.encode_params()
       %{"hashtags" => "elixirlang,liveview", "q" => "dev"}
   """
   def encode_params(params = %__MODULE__{}) do
@@ -68,23 +68,23 @@ defmodule LiveViewDemoWeb.Filters do
   ## Examples
 
       iex> %{"hashtags" => "elixirlang", "q" => "testing"}
-      ...> |> LiveViewDemoWeb.Filters.decode_params()
-      %LiveViewDemoWeb.Filters{hashtags: ["elixirlang"], query: "testing"}
+      ...> |> LiveViewDemo.Search.Facets.decode_params()
+      %LiveViewDemo.Search.Facets{hashtags: ["elixirlang"], query: "testing"}
 
       iex> %{"hashtags" => "elixirlang,liveview", "q" => ""}
-      ...> |> LiveViewDemoWeb.Filters.decode_params()
-      %LiveViewDemoWeb.Filters{hashtags: ["elixirlang", "liveview"]}
+      ...> |> LiveViewDemo.Search.Facets.decode_params()
+      %LiveViewDemo.Search.Facets{hashtags: ["elixirlang", "liveview"]}
 
       iex> %{"hashtags" => "elixirlang,liveview", "p" => "3"}
-      ...> |> LiveViewDemoWeb.Filters.decode_params()
-      %LiveViewDemoWeb.Filters{hashtags: ["elixirlang", "liveview"], page: 3}
+      ...> |> LiveViewDemo.Search.Facets.decode_params()
+      %LiveViewDemo.Search.Facets{hashtags: ["elixirlang", "liveview"], page: 3}
   """
   def decode_params(params) do
     %__MODULE__{
       hashtags: list_param(params["hashtags"]),
       profiles: list_param(params["profiles"]),
       query: text_param(params["q"]),
-      page: number_param(params["p"])
+      page: number_param(params["p"], 1)
     }
   end
 
@@ -99,13 +99,13 @@ defmodule LiveViewDemoWeb.Filters do
   defp text_param(""), do: nil
   defp text_param(str) when is_binary(str), do: str
 
-  defp number_param(nil), do: nil
-  defp number_param(""), do: nil
+  defp number_param(nil, default), do: default
+  defp number_param("", default), do: default
 
-  defp number_param(str) do
+  defp number_param(str, default) do
     case String.to_integer(str) do
       n when n > 0 -> n
-      _ -> nil
+      _ -> default
     end
   end
 

@@ -4,14 +4,15 @@ defmodule LiveViewDemoWeb.DashboardLive do
   use Phoenix.LiveView
 
   alias LiveViewDemoWeb.Router.Helpers, as: Routes
-  alias LiveViewDemoWeb.{Filters, Retrieval}
+  alias LiveViewDemoWeb.Retrieval
+  alias LiveViewDemo.Search.Facets
 
   def render(assigns) do
     Phoenix.View.render(LiveViewDemoWeb.PageView, "dashboard.html",
       user: assigns.user,
       top_hashtags: assigns.top_hashtags,
       top_profiles: assigns.top_profiles,
-      filters: assigns.filters,
+      facets: assigns.facets,
       autocomplete: assigns.autocomplete,
       conn: assigns.socket,
       retrieval: assigns.retrieval,
@@ -44,7 +45,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
       |> assign(:top_profiles, [])
       |> assign(:loaded_tweets, [])
       |> assign(:remaining_tweets, remaining_tweets)
-      |> assign(:filters, %Filters{})
+      |> assign(:facets, %Facets{})
       |> assign(:autocomplete, nil)
       |> assign(:retrieval, %Retrieval{})
       |> update_page()
@@ -55,7 +56,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
   def handle_params(params, _uri, socket) do
     new_socket =
       socket
-      |> assign(:filters, Filters.decode_params(params))
+      |> assign(:facets, Facets.decode_params(params))
       |> update_tweets()
       |> update_page()
       |> update_top_hashtags()
@@ -77,7 +78,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
   end
 
   defp search(socket, params, autocomplete) do
-    filter_params = Filters.encode_params(params)
+    filter_params = Facets.encode_params(params)
     path = Routes.live_path(socket, __MODULE__, filter_params)
 
     socket
@@ -112,29 +113,29 @@ defmodule LiveViewDemoWeb.DashboardLive do
   end
 
   defp update_tweets(socket) do
-    filters = socket.assigns.filters
+    facets = socket.assigns.facets
 
     tweets =
       socket.assigns.loaded_tweets
-      |> Filters.filter_by(filters.hashtags, fn tweet ->
+      |> Facets.filter_by(facets.hashtags, fn tweet ->
         Enum.map(tweet.entities.hashtags, & &1.text)
       end)
-      |> Filters.filter_by(filters.profiles, & &1.user.screen_name)
-      |> Filters.filter_by(filters.query, & &1.text)
+      |> Facets.filter_by(facets.profiles, & &1.user.screen_name)
+      |> Facets.filter_by(facets.query, & &1.text)
 
     assign(socket, tweets: tweets)
   end
 
   defp update_page(socket) do
     paginator =
-      Scrivener.paginate(socket.assigns.tweets, page: socket.assigns.filters.page, page_size: 2)
+      Scrivener.paginate(socket.assigns.tweets, page: socket.assigns.facets.page, page_size: 2)
 
     assign(socket, paginator: paginator)
   end
 
   defp update_top_hashtags(socket) do
     based_on =
-      if socket.assigns.filters.hashtags do
+      if socket.assigns.facets.hashtags do
         socket.assigns.loaded_tweets
       else
         socket.assigns.tweets
@@ -143,14 +144,14 @@ defmodule LiveViewDemoWeb.DashboardLive do
     top_hashtags =
       based_on
       |> Enum.flat_map(& &1.entities.hashtags)
-      |> ranked_options(socket.assigns.filters.hashtags, & &1.text)
+      |> ranked_options(socket.assigns.facets.hashtags, & &1.text)
 
     assign(socket, top_hashtags: top_hashtags)
   end
 
   defp update_top_profiles(socket) do
     based_on =
-      if socket.assigns.filters.profiles do
+      if socket.assigns.facets.profiles do
         socket.assigns.loaded_tweets
       else
         socket.assigns.tweets
@@ -158,7 +159,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
     top_profiles =
       based_on
-      |> ranked_options(socket.assigns.filters.profiles, & &1.user.screen_name)
+      |> ranked_options(socket.assigns.facets.profiles, & &1.user.screen_name)
       |> Enum.map(&find_profile(&1, socket.assigns.loaded_tweets))
 
     assign(socket, top_profiles: top_profiles)

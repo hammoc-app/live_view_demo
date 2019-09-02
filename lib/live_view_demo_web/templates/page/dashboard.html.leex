@@ -12,7 +12,7 @@
 <% end %>
 
 <form action="#" class="" phx-change="search" phx-submit="search">
-  <input name="q" type="text" value="<%= @filters.query %>">
+  <input name="q" type="text" value="<%= @facets.query %>">
   <input type="submit" value="Search">
   <%= if @autocomplete do %>
     <%= for word <- @autocomplete do %>
@@ -24,8 +24,8 @@
 
   <div class="section" id="hashtags">
     <%= for hashtag <- @top_hashtags do %>
-      <label class="button is-rounded<%= checked(hashtag, @filters.hashtags, " is-primary") %>">
-        <input name="hashtags[<%= hashtag %>]" type="checkbox" value="true"<%= checked(hashtag, @filters.hashtags) %> class="is-hidden">
+      <label class="button is-rounded<%= checked(hashtag, @facets.hashtags, " is-primary") %>">
+        <input name="hashtags[<%= hashtag %>]" type="checkbox" value="true"<%= checked(hashtag, @facets.hashtags) %> class="is-hidden">
         #<%= hashtag %>
       </label>
     <% end %>
@@ -33,8 +33,8 @@
 
   <div class="section" id="profiles">
     <%= for profile <- @top_profiles do %>
-      <label class="button is-rounded<%= checked(profile.screen_name, @filters.profiles, " is-primary") %>">
-        <input name="profiles[<%= profile.screen_name %>]" type="checkbox" value="true"<%= checked(profile.screen_name, @filters.profiles) %> class="is-hidden">
+      <label class="button is-rounded<%= checked(profile.screen_name, @facets.profiles, " is-primary") %>">
+        <input name="profiles[<%= profile.screen_name %>]" type="checkbox" value="true"<%= checked(profile.screen_name, @facets.profiles) %> class="is-hidden">
         <span class="image is-24x24 margin-right">
           <img src="<%= profile.profile_image_url %>" alt="Profile image" class="is-rounded" />
         </span>
@@ -104,7 +104,7 @@
                   <%= label %>
                 </a>
               <% else %>
-                <a class="pagination-link" data-phx-live-link="push" href="<%= Routes.live_path(@conn, LiveViewDemoWeb.DashboardLive, LiveViewDemoWeb.Filters.encode_params(%{@filters | page: page})) %>" rel="<%= Scrivener.HTML.SEO.rel(@paginator, page) %>">
+                <a class="pagination-link" data-phx-live-link="push" href="<%= Routes.live_path(@conn, LiveViewDemoWeb.DashboardLive, LiveViewDemo.Search.Facets.encode_params(%{@facets | page: page})) %>" rel="<%= Scrivener.HTML.SEO.rel(@paginator, page) %>">
                   <%= label %>
                 </a>
               <% end %>
