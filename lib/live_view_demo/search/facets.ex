@@ -30,6 +30,7 @@ defmodule LiveViewDemo.Search.Facets do
 
   defp add_url_param(params, key, val, default \\ nil)
   defp add_url_param(params, _key, default, default), do: params
+
   defp add_url_param(params, key, val, _default) do
     Map.put(params, key, val)
   end
@@ -64,12 +65,13 @@ defmodule LiveViewDemo.Search.Facets do
       hashtags: from_list_param(params["hashtags"]),
       profiles: from_list_param(params["profiles"]),
       query: from_text_param(params["q"]),
-      page: from_number_param(params["p"], 1),
+      page: from_number_param(params["p"], 1)
     }
   end
 
   defp from_list_param(nil), do: nil
   defp from_list_param(""), do: nil
+
   defp from_list_param(str) when is_binary(str) do
     String.split(str, ",")
   end
