@@ -104,7 +104,7 @@
                   <%= label %>
                 </a>
               <% else %>
-                <a class="pagination-link" data-phx-live-link="push" href="<%= Routes.live_path(@conn, LiveViewDemoWeb.DashboardLive, LiveViewDemo.Search.Facets.encode_params(%{@facets | page: page})) %>" rel="<%= Scrivener.HTML.SEO.rel(@paginator, page) %>">
+                <a class="pagination-link" data-phx-live-link="push" href="<%= Routes.live_path(@conn, LiveViewDemoWeb.DashboardLive, LiveViewDemo.Search.Facets.to_url_params(%{@facets | page: page})) %>" rel="<%= Scrivener.HTML.SEO.rel(@paginator, page) %>">
                   <%= label %>
                 </a>
               <% end %>

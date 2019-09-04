@@ -56,7 +56,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
   def handle_params(params, _uri, socket) do
     new_socket =
       socket
-      |> assign(:facets, Facets.decode_params(params))
+      |> assign(:facets, Facets.from_params(params))
       |> update_tweets()
       |> update_page()
       |> update_top_hashtags()
@@ -77,9 +77,9 @@ defmodule LiveViewDemoWeb.DashboardLive do
     {:noreply, new_socket}
   end
 
-  defp search(socket, params, autocomplete) do
-    filter_params = Facets.encode_params(params)
-    path = Routes.live_path(socket, __MODULE__, filter_params)
+  defp search(socket, form_params, autocomplete) do
+    url_params = form_params |> Facets.from_params() |> Facets.to_url_params()
+    path = Routes.live_path(socket, __MODULE__, url_params)
 
     socket
     |> update_autocomplete(autocomplete)
