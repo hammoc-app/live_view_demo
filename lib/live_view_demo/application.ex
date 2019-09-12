@@ -15,7 +15,9 @@ defmodule LiveViewDemo.Application do
       # Start the endpoint when the application starts
       LiveViewDemoWeb.Endpoint,
       # Search module
-      @search
+      @search,
+      # Retriever module
+      LiveViewDemo.Retriever
       # Starts a worker by calling: LiveViewDemo.Worker.start_link(arg)
       # {LiveViewDemo.Worker, arg},
     ]

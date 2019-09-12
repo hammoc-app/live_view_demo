@@ -23,14 +23,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
   end
 
   def mount(_session, socket) do
-    if connected?(socket), do: :timer.send_interval(1000, self(), :tick)
-
-    remaining_tweets =
-      [File.cwd!(), "priv", "fixtures", "favourites.json"]
-      |> Path.join()
-      |> File.read!()
-      |> Jason.decode!()
-      |> Util.Map.deep_atomize_keys()
+    LiveViewDemo.Retriever.subscribe()
 
     user = %{
       screen_name: "sasajuric",
@@ -44,8 +37,6 @@ defmodule LiveViewDemoWeb.DashboardLive do
       |> assign(:user, user)
       |> assign(:top_hashtags, [])
       |> assign(:top_profiles, [])
-      |> assign(:loaded_tweets, [])
-      |> assign(:remaining_tweets, remaining_tweets)
       |> assign(:facets, %Facets{})
       |> assign(:autocomplete, nil)
       |> assign(:retrieval, %Retrieval{})
@@ -86,31 +77,15 @@ defmodule LiveViewDemoWeb.DashboardLive do
     |> live_redirect(to: path)
   end
 
-  def handle_info(:tick, socket = %{assigns: %{remaining_tweets: []}}) do
-    {:noreply, socket}
-  end
-
-  def handle_info(
-        :tick,
-        socket = %{assigns: %{remaining_tweets: [loaded_tweet | remaining_tweets]}}
-      ) do
+  def handle_info({:retrieval_progress, retrieval_info}, socket) do
     new_socket =
       socket
-      |> assign(:remaining_tweets, remaining_tweets)
-      |> loaded_tweets([loaded_tweet])
+      |> assign(:retrieval, retrieval_info)
+      |> update_tweets()
+      |> update_top_hashtags()
+      |> update_top_profiles()
 
     {:noreply, new_socket}
-  end
-
-  defp loaded_tweets(socket, tweets) do
-    :ok = @search.index(tweets)
-
-    socket
-    |> update(:loaded_tweets, fn loaded_tweets -> loaded_tweets ++ tweets end)
-    |> update_tweets()
-    |> update_top_hashtags()
-    |> update_top_profiles()
-    |> update_progress()
   end
 
   defp update_tweets(socket) do
@@ -129,26 +104,6 @@ defmodule LiveViewDemoWeb.DashboardLive do
     {:ok, top_profiles} = @search.top_profiles(socket.assigns.facets)
 
     assign(socket, top_profiles: top_profiles)
-  end
-
-  defp update_progress(socket) do
-    assign(socket, retrieval: retrieval_info(socket))
-  end
-
-  defp retrieval_info(%{assigns: %{remaining_tweets: []}}), do: %Retrieval{}
-
-  defp retrieval_info(socket) do
-    {:ok, total_count} = @search.total_count()
-
-    %Retrieval{
-      jobs: [
-        %Retrieval.Job{
-          channel: "Twitter Favorites",
-          current: total_count,
-          max: total_count + length(socket.assigns.remaining_tweets)
-        }
-      ]
-    }
   end
 
   defp update_autocomplete(socket, query) do
