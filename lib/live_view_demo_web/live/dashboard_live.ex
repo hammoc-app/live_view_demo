@@ -5,7 +5,9 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
   alias LiveViewDemoWeb.Router.Helpers, as: Routes
   alias LiveViewDemoWeb.Retrieval
-  alias LiveViewDemo.Search.{Autocomplete, Facets}
+  alias LiveViewDemo.Search.Facets
+
+  @search Application.get_env(:live_view_demo, LiveViewDemo.Search)[:module]
 
   def render(assigns) do
     Phoenix.View.render(LiveViewDemoWeb.PageView, "dashboard.html",
@@ -40,7 +42,6 @@ defmodule LiveViewDemoWeb.DashboardLive do
     new_socket =
       socket
       |> assign(:user, user)
-      |> assign(:tweets, [])
       |> assign(:top_hashtags, [])
       |> assign(:top_profiles, [])
       |> assign(:loaded_tweets, [])
@@ -48,7 +49,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
       |> assign(:facets, %Facets{})
       |> assign(:autocomplete, nil)
       |> assign(:retrieval, %Retrieval{})
-      |> update_page()
+      |> update_tweets()
 
     {:ok, new_socket}
   end
@@ -58,7 +59,6 @@ defmodule LiveViewDemoWeb.DashboardLive do
       socket
       |> assign(:facets, Facets.from_params(params))
       |> update_tweets()
-      |> update_page()
       |> update_top_hashtags()
       |> update_top_profiles()
 
@@ -103,64 +103,30 @@ defmodule LiveViewDemoWeb.DashboardLive do
   end
 
   defp loaded_tweets(socket, tweets) do
+    :ok = @search.index(tweets)
+
     socket
     |> update(:loaded_tweets, fn loaded_tweets -> loaded_tweets ++ tweets end)
     |> update_tweets()
-    |> update_page()
     |> update_top_hashtags()
     |> update_top_profiles()
     |> update_progress()
   end
 
   defp update_tweets(socket) do
-    facets = socket.assigns.facets
-
-    tweets =
-      socket.assigns.loaded_tweets
-      |> Facets.filter_by(facets.hashtags, fn tweet ->
-        Enum.map(tweet.entities.hashtags, & &1.text)
-      end)
-      |> Facets.filter_by(facets.profiles, & &1.user.screen_name)
-      |> Facets.filter_by(facets.query, & &1.text)
-
-    assign(socket, tweets: tweets)
-  end
-
-  defp update_page(socket) do
-    paginator =
-      Scrivener.paginate(socket.assigns.tweets, page: socket.assigns.facets.page, page_size: 2)
+    {:ok, paginator} = @search.query(socket.assigns.facets)
 
     assign(socket, paginator: paginator)
   end
 
   defp update_top_hashtags(socket) do
-    based_on =
-      if socket.assigns.facets.hashtags do
-        socket.assigns.loaded_tweets
-      else
-        socket.assigns.tweets
-      end
-
-    top_hashtags =
-      based_on
-      |> Enum.flat_map(& &1.entities.hashtags)
-      |> ranked_options(socket.assigns.facets.hashtags, & &1.text)
+    {:ok, top_hashtags} = @search.top_hashtags(socket.assigns.facets)
 
     assign(socket, top_hashtags: top_hashtags)
   end
 
   defp update_top_profiles(socket) do
-    based_on =
-      if socket.assigns.facets.profiles do
-        socket.assigns.loaded_tweets
-      else
-        socket.assigns.tweets
-      end
-
-    top_profiles =
-      based_on
-      |> ranked_options(socket.assigns.facets.profiles, & &1.user.screen_name)
-      |> Enum.map(&find_profile(&1, socket.assigns.loaded_tweets))
+    {:ok, top_profiles} = @search.top_profiles(socket.assigns.facets)
 
     assign(socket, top_profiles: top_profiles)
   end
@@ -172,45 +138,22 @@ defmodule LiveViewDemoWeb.DashboardLive do
   defp retrieval_info(%{assigns: %{remaining_tweets: []}}), do: %Retrieval{}
 
   defp retrieval_info(socket) do
+    {:ok, total_count} = @search.total_count()
+
     %Retrieval{
       jobs: [
         %Retrieval.Job{
           channel: "Twitter Favorites",
-          current: length(socket.assigns.loaded_tweets),
-          max: length(socket.assigns.loaded_tweets) + length(socket.assigns.remaining_tweets)
+          current: total_count,
+          max: total_count + length(socket.assigns.remaining_tweets)
         }
       ]
     }
   end
 
-  defp find_profile(screen_name, tweets) do
-    Enum.find_value(tweets, fn tweet ->
-      if tweet.user.screen_name == screen_name, do: tweet.user
-    end)
-  end
-
-  defp ranked_options(options, selected_options, mapper) do
-    options
-    |> Util.Enum.count(mapper)
-    |> Util.Enum.top_counts(5)
-    |> Enum.map(&elem(&1, 0))
-    |> Util.List.prepend(selected_options)
-    |> Enum.uniq()
-    |> Enum.take(5)
-  end
-
   defp update_autocomplete(socket, query) do
-    words =
-      case query do
-        nil ->
-          nil
+    {:ok, suggestions} = @search.autocomplete(query)
 
-        query ->
-          if String.length(query) >= 3 do
-            Autocomplete.for(socket.assigns.loaded_tweets, & &1.text, query)
-          end
-      end
-
-    assign(socket, autocomplete: words)
+    assign(socket, autocomplete: suggestions)
   end
 end
