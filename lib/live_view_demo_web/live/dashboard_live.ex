@@ -5,7 +5,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
   alias LiveViewDemoWeb.Router.Helpers, as: Routes
   alias LiveViewDemoWeb.Retrieval
-  alias LiveViewDemo.Search.Facets
+  alias LiveViewDemo.Search.{Autocomplete, Facets}
 
   def render(assigns) do
     Phoenix.View.render(LiveViewDemoWeb.PageView, "dashboard.html",
@@ -207,39 +207,10 @@ defmodule LiveViewDemoWeb.DashboardLive do
 
         query ->
           if String.length(query) >= 3 do
-            add_autocomplete_from(query, socket.assigns.loaded_tweets, [], MapSet.new())
+            Autocomplete.for(socket.assigns.loaded_tweets, & &1.text, query)
           end
       end
 
     assign(socket, autocomplete: words)
-  end
-
-  defp add_autocomplete_from(_query, [], [], results), do: results
-
-  defp add_autocomplete_from(query, [tweet | tweets], [], results) do
-    words =
-      ~r/[\w\-\_]+/i
-      |> Regex.scan(String.downcase(tweet.text))
-      |> List.flatten()
-
-    add_autocomplete_from(query, tweets, words, results)
-  end
-
-  defp add_autocomplete_from(query, tweets, [word | words], results) do
-    if String.starts_with?(word, query) do
-      if MapSet.member?(results, word) do
-        add_autocomplete_from(query, tweets, words, results)
-      else
-        new_results = MapSet.put(results, word)
-
-        if MapSet.size(new_results) == 5 do
-          new_results
-        else
-          add_autocomplete_from(query, tweets, words, new_results)
-        end
-      end
-    else
-      add_autocomplete_from(query, tweets, words, results)
-    end
   end
 end
