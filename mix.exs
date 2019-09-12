@@ -48,11 +48,14 @@ defmodule LiveViewDemo.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:calendar, "~> 0.17.6"},
+      {:scrivener_list, "~> 2.0"},
+      {:scrivener_html, "~> 1.8"},
 
       # testing
       # =======
       {:credo, "~> 1.1", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.6", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.0.0-rc.6", only: [:dev, :test], runtime: false},
+      {:mix_test_watch, "~> 0.9", only: :dev, runtime: false}
     ]
   end
 
