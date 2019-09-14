@@ -4,7 +4,7 @@ defmodule LiveViewDemo.Retriever.Client.Fixtures do
   use GenServer
 
   alias LiveViewDemo.Retriever.Client
-  alias LiveViewDemoWeb.Retrieval.Job
+  alias LiveViewDemo.Retriever.Status.Job
 
   @behaviour Client
 

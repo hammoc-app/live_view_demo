@@ -3,7 +3,7 @@ defmodule LiveViewDemo.Retriever do
 
   use GenServer
 
-  alias LiveViewDemoWeb.Retrieval
+  alias LiveViewDemo.Retriever.Status
 
   @search Application.get_env(:live_view_demo, LiveViewDemo.Search)[:module]
   @client Application.get_env(:live_view_demo, LiveViewDemo.Retriever)[:client_module]
@@ -64,7 +64,7 @@ defmodule LiveViewDemo.Retriever do
   end
 
   defp notify_subscribers(state) do
-    retrieval_info = %Retrieval{jobs: state.retrieval_jobs}
+    retrieval_info = %Status{jobs: state.retrieval_jobs}
 
     Enum.each(state.subscribers, fn pid ->
       send(pid, {:retrieval_progress, retrieval_info})

@@ -4,7 +4,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
   use Phoenix.LiveView
 
   alias LiveViewDemoWeb.Router.Helpers, as: Routes
-  alias LiveViewDemoWeb.Retrieval
+  alias LiveViewDemo.Retriever.Status
   alias LiveViewDemo.Search.Facets
 
   @search Application.get_env(:live_view_demo, LiveViewDemo.Search)[:module]
@@ -39,7 +39,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
       |> assign(:top_profiles, [])
       |> assign(:facets, %Facets{})
       |> assign(:autocomplete, nil)
-      |> assign(:retrieval, %Retrieval{})
+      |> assign(:retrieval, %Status{})
       |> update_tweets()
 
     {:ok, new_socket}
