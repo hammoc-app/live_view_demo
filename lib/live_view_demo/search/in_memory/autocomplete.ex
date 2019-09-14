@@ -1,4 +1,4 @@
-defmodule LiveViewDemo.Search.Autocomplete do
+defmodule LiveViewDemo.Search.InMemory.Autocomplete do
   @moduledoc "Provides basic auto-complete."
 
   def for(enum, mapper, query, limit \\ 5) do

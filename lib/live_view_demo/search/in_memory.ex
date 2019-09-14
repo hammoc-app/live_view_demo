@@ -4,7 +4,8 @@ defmodule LiveViewDemo.Search.InMemory do
   use GenServer
 
   alias LiveViewDemo.Search
-  alias LiveViewDemo.Search.{Autocomplete, Facets}
+  alias LiveViewDemo.Search.Facets
+  alias LiveViewDemo.Search.InMemory.Autocomplete
 
   @behaviour Search
 

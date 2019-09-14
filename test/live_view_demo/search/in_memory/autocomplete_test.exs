@@ -1,7 +1,7 @@
-defmodule LiveViewDemo.Search.AutocompleteTest do
+defmodule LiveViewDemo.Search.InMemory.AutocompleteTest do
   use ExUnit.Case, async: true
 
-  alias LiveViewDemo.Search.Autocomplete
+  alias LiveViewDemo.Search.InMemory.Autocomplete
 
   setup do
     {:ok,
