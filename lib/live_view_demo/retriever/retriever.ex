@@ -6,6 +6,7 @@ defmodule LiveViewDemo.Retriever do
   alias LiveViewDemoWeb.Retrieval
 
   @search Application.get_env(:live_view_demo, LiveViewDemo.Search)[:module]
+  @client Application.get_env(:live_view_demo, LiveViewDemo.Retriever)[:client_module]
 
   def start_link(_args) do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -17,21 +18,15 @@ defmodule LiveViewDemo.Retriever do
 
   @impl GenServer
   def init(_args) do
-    :timer.send_interval(1000, self(), :tick)
-
     {:ok, nil}
   end
 
   @impl GenServer
   def handle_call(:subscribe, {pid, _ref}, nil) do
-    remaining_tweets =
-      [File.cwd!(), "priv", "fixtures", "favourites.json"]
-      |> Path.join()
-      |> File.read!()
-      |> Jason.decode!()
-      |> Util.Map.deep_atomize_keys()
+    {:ok, retrieval_job} = @client.init()
+    send(self(), :tick)
 
-    {:reply, :ok, %{subscribers: [pid], remaining_tweets: remaining_tweets}}
+    {:reply, :ok, %{subscribers: [pid], retrieval_jobs: [retrieval_job]}}
   end
 
   def handle_call(:subscribe, {pid, _ref}, state) do
@@ -40,19 +35,23 @@ defmodule LiveViewDemo.Retriever do
   end
 
   @impl GenServer
-  def handle_info(:tick, nil) do
-    {:noreply, nil}
-  end
+  def handle_info(:tick, state = %{retrieval_jobs: [retrieval_job]}) do
+    {:ok, tweets, new_retrieval_job} = @client.next_batch(retrieval_job)
 
-  def handle_info(:tick, state = %{remaining_tweets: []}) do
-    {:noreply, state}
-  end
+    new_retrieval_jobs =
+      case tweets do
+        [] ->
+          []
 
-  def handle_info(:tick, state = %{remaining_tweets: [loaded_tweet | remaining_tweets]}) do
+        _ ->
+          send(self(), :tick)
+          [new_retrieval_job]
+      end
+
     new_state =
       state
-      |> Map.put(:remaining_tweets, remaining_tweets)
-      |> loaded_tweets([loaded_tweet])
+      |> Map.put(:retrieval_jobs, new_retrieval_jobs)
+      |> loaded_tweets(tweets)
       |> notify_subscribers()
 
     {:noreply, new_state}
@@ -65,28 +64,12 @@ defmodule LiveViewDemo.Retriever do
   end
 
   defp notify_subscribers(state) do
-    retrieval_info = retrieval_info(state)
+    retrieval_info = %Retrieval{jobs: state.retrieval_jobs}
 
     Enum.each(state.subscribers, fn pid ->
       send(pid, {:retrieval_progress, retrieval_info})
     end)
 
     state
-  end
-
-  defp retrieval_info(%{remaining_tweets: []}), do: %Retrieval{}
-
-  defp retrieval_info(state) do
-    {:ok, total_count} = @search.total_count()
-
-    %Retrieval{
-      jobs: [
-        %Retrieval.Job{
-          channel: "Twitter Favorites",
-          current: total_count,
-          max: total_count + length(state.remaining_tweets)
-        }
-      ]
-    }
   end
 end
