@@ -45,4 +45,26 @@ defmodule Util.Enum do
     |> Enum.sort_by(&elem(&1, 1), &>=/2)
     |> Enum.take(top)
   end
+
+  @doc """
+  Works like `Enum.slice/3` or like `Enum.slice/2` with the additional possibility to pass
+  an index as second argument, which will return a list with only the element at this index.
+
+  ## Examples
+
+      iex> Util.Enum.slice([1, 2, 3], 1..2)
+      [2, 3]
+
+      iex> Util.Enum.slice([1, 2, 3], 0, 2)
+      [1, 2]
+
+      iex> Util.Enum.slice([1, 2, 3], 0)
+      [1]
+  """
+  def slice(enum, index_or_range, amount \\ 1) do
+    case index_or_range do
+      range = %Range{} -> Enum.slice(enum, range)
+      index when is_integer(index) -> Enum.slice(enum, index, amount)
+    end
+  end
 end

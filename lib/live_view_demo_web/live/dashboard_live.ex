@@ -23,7 +23,7 @@ defmodule LiveViewDemoWeb.DashboardLive do
   end
 
   def mount(_session, socket) do
-    LiveViewDemo.Retriever.subscribe()
+    send(self(), :subscribe_retrieval_progress)
 
     user = %{
       screen_name: "sasajuric",
@@ -75,6 +75,12 @@ defmodule LiveViewDemoWeb.DashboardLive do
     socket
     |> update_autocomplete(autocomplete)
     |> live_redirect(to: path)
+  end
+
+  def handle_info(:subscribe_retrieval_progress, socket) do
+    LiveViewDemo.Retriever.subscribe()
+
+    {:noreply, socket}
   end
 
   def handle_info({:retrieval_progress, retrieval_info}, socket) do
