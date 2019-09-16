@@ -16,6 +16,10 @@ defmodule LiveViewDemoWeb.LiveIntegrationCase do
 
   use ExUnit.CaseTemplate
 
+  defmodule State do
+    defstruct [:conn, :view, :html, :retrieval_job]
+  end
+
   using do
     quote do
       # Import conveniences for testing with connections
@@ -27,33 +31,60 @@ defmodule LiveViewDemoWeb.LiveIntegrationCase do
       # The default endpoint for testing
       @endpoint LiveViewDemoWeb.Endpoint
 
-      import Phoenix.LiveViewTest
+      @client Application.get_env(:live_view_demo, LiveViewDemo.Retriever)[:client_module]
 
-      def init_retrieval(client, total_count) do
+      use PhoenixIntegration
+
+      alias Phoenix.LiveViewTest
+      require LiveViewTest
+
+      def live(conn, path) do
+        {:ok, view, html} = LiveViewTest.live(conn, path)
+
+        %State{conn: conn, view: view, html: html}
+      end
+
+      def assert_rendered(state = %State{}, opts) do
+        conn = Map.put(state.conn, :resp_body, state.html)
+
+        assert_response(conn, opts)
+
+        state
+      end
+
+      def refute_rendered(state = %State{}, opts) do
+        conn = Map.put(state.conn, :resp_body, state.html)
+
+        refute_response(conn, opts)
+
+        state
+      end
+
+      def init_retrieval(state = %State{}, total_count) do
         retrieval_job = %Job{channel: "Twitter Favorites", current: 0, max: total_count}
-        {:ok, :init} = client.send_reply({:ok, retrieval_job})
+        {:ok, :init} = @client.send_reply({:ok, retrieval_job})
 
         :timer.sleep(100)
 
-        retrieval_job
+        %{state | retrieval_job: retrieval_job, html: LiveViewTest.render(state.view)}
       end
 
-      def next_retrieval(client, retrieval_job, batch) do
+      def next_retrieval(state = %State{retrieval_job: retrieval_job}, batch) do
         new_retrieval_job = Map.update(retrieval_job, :current, 0, &(&1 + length(batch)))
-        {:ok, {:next_batch, ^retrieval_job}} = client.send_reply({:ok, batch, new_retrieval_job})
+        {:ok, {:next_batch, ^retrieval_job}} = @client.send_reply({:ok, batch, new_retrieval_job})
 
         :timer.sleep(100)
 
-        new_retrieval_job
+        %{state | retrieval_job: new_retrieval_job, html: LiveViewTest.render(state.view)}
       end
 
-      def finish_retrieval(client, retrieval_job) do
+      def finish_retrieval(state = %State{retrieval_job: retrieval_job}) do
         new_retrieval_job = Map.put(retrieval_job, :current, retrieval_job.max)
-        {:ok, {:next_batch, ^retrieval_job}} = client.send_reply({:ok, [], new_retrieval_job})
+        {:ok, {:next_batch, ^retrieval_job}} = @client.send_reply({:ok, [], new_retrieval_job})
 
         :timer.sleep(100)
 
-        :ok
+        %{state | retrieval_job: nil, html: LiveViewTest.render(state.view)}
       end
     end
   end
@@ -66,11 +97,5 @@ defmodule LiveViewDemoWeb.LiveIntegrationCase do
     end
 
     {:ok, conn: Phoenix.ConnTest.build_conn()}
-  end
-
-  setup do
-    client = Application.get_env(:live_view_demo, LiveViewDemo.Retriever)[:client_module]
-
-    {:ok, client: client}
   end
 end
