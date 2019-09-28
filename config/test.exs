@@ -16,3 +16,6 @@ config :live_view_demo, LiveViewDemoWeb.Endpoint,
 
 # Print only warnings and errors during test
 config :logger, level: :warn
+
+config :live_view_demo, LiveViewDemo.Retriever,
+  client_module: LiveViewDemo.Retriever.Client.RemoteControlled

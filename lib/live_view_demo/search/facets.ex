@@ -1,6 +1,13 @@
 defmodule LiveViewDemo.Search.Facets do
   @moduledoc "Data structure and helpers to deal with the filters form."
 
+  @type t :: %__MODULE__{
+          hashtags: list(String.t()) | nil,
+          profiles: list(String.t()) | nil,
+          query: String.t() | nil,
+          page: integer()
+        }
+
   defstruct [:hashtags, :profiles, :query, page: 1]
 
   @doc """

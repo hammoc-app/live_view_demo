@@ -5,13 +5,19 @@ defmodule LiveViewDemo.Application do
 
   use Application
 
+  @search Application.get_env(:live_view_demo, LiveViewDemo.Search)[:module]
+
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
       # Start the Ecto repository
       LiveViewDemo.Repo,
       # Start the endpoint when the application starts
-      LiveViewDemoWeb.Endpoint
+      LiveViewDemoWeb.Endpoint,
+      # Search module
+      @search,
+      # Retriever module
+      LiveViewDemo.Retriever
       # Starts a worker by calling: LiveViewDemo.Worker.start_link(arg)
       # {LiveViewDemo.Worker, arg},
     ]
