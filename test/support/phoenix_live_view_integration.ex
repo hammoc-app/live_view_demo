@@ -1,4 +1,6 @@
 defmodule PhoenixLiveViewIntegration do
+  @moduledoc "Helper functions for LiveView integration tests, inspired by the PhoenixIntegration library."
+
   defmacro __using__(_opts) do
     quote do
       require Phoenix.LiveViewTest
@@ -15,11 +17,17 @@ defmodule PhoenixLiveViewIntegration do
     end
   end
 
-  alias PhoenixIntegration.Assertions.ResponseError
-  use PhoenixIntegration
+  alias __MODULE__.ResponseError
 
   defmodule State do
+    @moduledoc "Token struct used to chain integration actions and assertions in tests."
+
     defstruct [:conn, :view, :html, :retrieval_job]
+  end
+
+  defmodule ResponseError do
+    @moduledoc false
+    defexception message: "#{IO.ANSI.red()}The conn's response was not formed as expected\n"
   end
 
   def assert_rendered(state = %State{}, conditions) do
