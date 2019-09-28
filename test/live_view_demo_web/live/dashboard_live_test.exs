@@ -19,12 +19,14 @@ defmodule LiveViewDemoWeb.DashboardLiveTest do
       body: "How we deal with behaviours and boilerplate"
     )
     |> next_retrieval(tweets(0))
+    |> assert_rendered(element: ["progress[value=1][max=2]", text: "1/2"])
     |> assert_rendered(body: "If you lead development teams, you need to read this")
     |> refute_rendered(body: "How we deal with behaviours and boilerplate")
     |> next_retrieval(tweets(1))
     |> assert_rendered(body: "If you lead development teams, you need to read this")
     |> assert_rendered(body: "How we deal with behaviours and boilerplate")
     |> finish_retrieval()
+    |> refute_rendered(element: "progress")
     |> assert_rendered(body: "If you lead development teams, you need to read this")
     |> assert_rendered(body: "How we deal with behaviours and boilerplate")
   end

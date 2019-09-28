@@ -16,10 +16,6 @@ defmodule LiveViewDemoWeb.LiveIntegrationCase do
 
   use ExUnit.CaseTemplate
 
-  defmodule State do
-    defstruct [:conn, :view, :html, :retrieval_job]
-  end
-
   using do
     quote do
       # Import conveniences for testing with connections
@@ -33,32 +29,11 @@ defmodule LiveViewDemoWeb.LiveIntegrationCase do
 
       @client Application.get_env(:live_view_demo, LiveViewDemo.Retriever)[:client_module]
 
-      use PhoenixIntegration
-
       alias Phoenix.LiveViewTest
       require LiveViewTest
 
-      def live(conn, path) do
-        {:ok, view, html} = LiveViewTest.live(conn, path)
-
-        %State{conn: conn, view: view, html: html}
-      end
-
-      def assert_rendered(state = %State{}, opts) do
-        conn = Map.put(state.conn, :resp_body, state.html)
-
-        assert_response(conn, opts)
-
-        state
-      end
-
-      def refute_rendered(state = %State{}, opts) do
-        conn = Map.put(state.conn, :resp_body, state.html)
-
-        refute_response(conn, opts)
-
-        state
-      end
+      use PhoenixLiveViewIntegration
+      alias PhoenixLiveViewIntegration.State
 
       def init_retrieval(state = %State{}, total_count) do
         retrieval_job = %Job{channel: "Twitter Favorites", current: 0, max: total_count}
