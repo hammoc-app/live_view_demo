@@ -39,27 +39,26 @@ defmodule LiveViewDemoWeb.LiveIntegrationCase do
         retrieval_job = %Job{channel: "Twitter Favorites", current: 0, max: total_count}
         {:ok, :init} = @client.send_reply({:ok, retrieval_job})
 
-        :timer.sleep(100)
-
-        %{state | retrieval_job: retrieval_job, html: LiveViewTest.render(state.view)}
+        %{state | extra: %{retrieval_job: retrieval_job}, html: wait_for_html(state)}
       end
 
-      def next_retrieval(state = %State{retrieval_job: retrieval_job}, batch) do
+      def next_retrieval(state = %State{extra: %{retrieval_job: retrieval_job}}, batch) do
         new_retrieval_job = Map.update(retrieval_job, :current, 0, &(&1 + length(batch)))
         {:ok, {:next_batch, ^retrieval_job}} = @client.send_reply({:ok, batch, new_retrieval_job})
 
-        :timer.sleep(100)
-
-        %{state | retrieval_job: new_retrieval_job, html: LiveViewTest.render(state.view)}
+        %{state | extra: %{retrieval_job: new_retrieval_job}, html: wait_for_html(state)}
       end
 
-      def finish_retrieval(state = %State{retrieval_job: retrieval_job}) do
+      def finish_retrieval(state = %State{extra: %{retrieval_job: retrieval_job}}) do
         new_retrieval_job = Map.put(retrieval_job, :current, retrieval_job.max)
         {:ok, {:next_batch, ^retrieval_job}} = @client.send_reply({:ok, [], new_retrieval_job})
 
-        :timer.sleep(100)
+        %{state | extra: %{retrieval_job: nil}, html: wait_for_html(state)}
+      end
 
-        %{state | retrieval_job: nil, html: LiveViewTest.render(state.view)}
+      defp wait_for_html(state) do
+        :timer.sleep(100)
+        LiveViewTest.render(state.view)
       end
     end
   end

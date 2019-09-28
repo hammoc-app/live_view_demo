@@ -22,7 +22,7 @@ defmodule PhoenixLiveViewIntegration do
   defmodule State do
     @moduledoc "Token struct used to chain integration actions and assertions in tests."
 
-    defstruct [:conn, :view, :html, :retrieval_job]
+    defstruct [:conn, :view, :html, extra: %{}]
   end
 
   defmodule ResponseError do
